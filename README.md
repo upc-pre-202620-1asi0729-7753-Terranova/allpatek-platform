@@ -15,7 +15,7 @@ Necesitas MySQL 8 corriendo. En XAMPP basta con el usuario `root` sin clave. La 
 - API: http://localhost:8090/api/v1
 - Swagger: http://localhost:8090/swagger-ui/index.html
 
-El perfil por defecto es `dev` (`ddl-auto=update`, SQL en consola). En `prod` hay que pasar las variables de entorno y el puerto pasa a `8080`.
+El perfil por defecto es `dev` (`ddl-auto=update`, SQL en consola). En `prod` el puerto pasa a `8080`.
 
 ## Rutas
 
@@ -31,16 +31,3 @@ Todo va bajo `/api/v1`:
 | `/profiles` | GET, PUT | Perfil de usuario |
 
 Los mensajes de validación salen en inglés o español según `Accept-Language`.
-
-## Variables
-
-Opcionales en `dev`. En `prod` son obligatorias, menos `PORT`.
-
-| Variable | Default (dev) |
-|---|---|
-| `DATABASE_USER` | `root` |
-| `DATABASE_PASSWORD` | vacío |
-| `DATABASE_URL` | `127.0.0.1` |
-| `DATABASE_PORT` | `3306` |
-| `DATABASE_NAME` | `allpatek-os` |
-| `PORT` | `8090` |
