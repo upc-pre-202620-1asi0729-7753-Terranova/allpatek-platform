@@ -1,8 +1,12 @@
 # Allpatek Platform
 
-API REST en Java 27, Spring Boot 4 y MySQL. Puerto **8090**.
+Backend de Allpatek. Expone una API REST para parcelas, contratos, bóveda de pagos, evidencias de hitos y alertas climáticas.
 
-MySQL 8 en local, base `allpatek-os`, usuario `root`:
+Stack: Java 27, Spring Boot 4, Spring Data JPA y MySQL 8. El servidor queda en el puerto **8090**. El frontend Angular en `http://localhost:4200` ya está permitido por CORS.
+
+## Levantar en local
+
+Necesitas MySQL 8 corriendo. En XAMPP basta con el usuario `root` sin clave. La base `allpatek-os` se crea sola la primera vez.
 
 ```bash
 ./mvnw spring-boot:run
@@ -11,6 +15,32 @@ MySQL 8 en local, base `allpatek-os`, usuario `root`:
 - API: http://localhost:8090/api/v1
 - Swagger: http://localhost:8090/swagger-ui/index.html
 
-Rutas bajo `/api/v1`: `parcels`, `agreements`, `wallets`, `evidence`, `alerts` y `profiles`. Las cuatro primeras tienen GET, POST, PUT y DELETE. `alerts` consulta el clima con Open-Meteo. Si agricultor y comerciante firman el contrato, la parcela pasa a `in-production`.
+El perfil por defecto es `dev` (`ddl-auto=update`, SQL en consola). En `prod` hay que pasar las variables de entorno y el puerto pasa a `8080`.
 
-Variables opcionales: `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_URL`, `DATABASE_PORT`, `DATABASE_NAME`, `PORT`. El perfil por defecto es `dev`.
+## Rutas
+
+Todo va bajo `/api/v1`:
+
+| Recurso | Métodos | Notas |
+|---|---|---|
+| `/parcels` | GET, POST, PUT, DELETE | Parcela agrícola |
+| `/agreements` | GET, POST, PUT, DELETE | Contrato. Si firman agricultor y comerciante, la parcela pasa a `in-production` |
+| `/wallets` | GET, POST, PUT, DELETE | Tarjeta de la bóveda |
+| `/evidence` | GET, POST, PUT, DELETE | Evidencia de cada hito |
+| `/alerts` | GET | Clima con Open-Meteo, filtrable por `ownerId` |
+| `/profiles` | GET, PUT | Perfil de usuario |
+
+Los mensajes de validación salen en inglés o español según `Accept-Language`.
+
+## Variables
+
+Opcionales en `dev`. En `prod` son obligatorias, menos `PORT`.
+
+| Variable | Default (dev) |
+|---|---|
+| `DATABASE_USER` | `root` |
+| `DATABASE_PASSWORD` | vacío |
+| `DATABASE_URL` | `127.0.0.1` |
+| `DATABASE_PORT` | `3306` |
+| `DATABASE_NAME` | `allpatek-os` |
+| `PORT` | `8090` |
