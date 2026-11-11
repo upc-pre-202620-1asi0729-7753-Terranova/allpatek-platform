@@ -9,6 +9,12 @@ public class PaymentCardPersistenceEmbeddable {
     @Column(nullable = false, length = 160)
     private String holder;
 
+    @Column(name = "card_number", length = 16)
+    private String number;
+
+    @Column(name = "cvv", length = 4)
+    private String cvv;
+
     @Column(name = "last4", nullable = false, length = 4)
     private String last4;
 
@@ -21,11 +27,30 @@ public class PaymentCardPersistenceEmbeddable {
     public PaymentCardPersistenceEmbeddable() {
     }
 
-    public PaymentCardPersistenceEmbeddable(String holder, String last4, String expiry, String brand) {
+    public PaymentCardPersistenceEmbeddable(
+            String holder, String number, String cvv, String last4, String expiry, String brand) {
         this.holder = holder;
+        this.number = number;
+        this.cvv = cvv;
         this.last4 = last4;
         this.expiry = expiry;
         this.brand = brand;
+    }
+
+    public String getNumber() {
+        return number;
+    }
+
+    public void setNumber(String number) {
+        this.number = number;
+    }
+
+    public String getCvv() {
+        return cvv;
+    }
+
+    public void setCvv(String cvv) {
+        this.cvv = cvv;
     }
 
     public String getHolder() {

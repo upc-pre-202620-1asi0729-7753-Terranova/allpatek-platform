@@ -24,9 +24,19 @@ public class EvidenceRepositoryImpl implements EvidenceRepository {
     }
 
     @Override
+    public boolean existsById(String id) {
+        return persistenceRepository.existsById(id);
+    }
+
+    @Override
     public List<MilestoneEvidence> findAll() {
         return persistenceRepository.findAll().stream()
                 .map(EvidencePersistenceAssembler::toDomainFromPersistence)
                 .toList();
+    }
+
+    @Override
+    public void deleteById(String id) {
+        persistenceRepository.deleteById(id);
     }
 }

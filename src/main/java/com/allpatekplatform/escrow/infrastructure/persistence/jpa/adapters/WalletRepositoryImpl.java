@@ -24,9 +24,19 @@ public class WalletRepositoryImpl implements WalletRepository {
     }
 
     @Override
+    public boolean existsById(String id) {
+        return persistenceRepository.existsById(id);
+    }
+
+    @Override
     public List<Wallet> findAll() {
         return persistenceRepository.findAll().stream()
                 .map(WalletPersistenceAssembler::toDomainFromPersistence)
                 .toList();
+    }
+
+    @Override
+    public void deleteById(String id) {
+        persistenceRepository.deleteById(id);
     }
 }

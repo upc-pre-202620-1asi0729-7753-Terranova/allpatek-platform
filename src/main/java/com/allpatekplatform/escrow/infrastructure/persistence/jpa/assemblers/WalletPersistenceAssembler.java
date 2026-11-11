@@ -34,10 +34,22 @@ public final class WalletPersistenceAssembler {
     }
 
     private static PaymentCard toDomainFromPersistence(PaymentCardPersistenceEmbeddable value) {
-        return new PaymentCard(value.getHolder(), value.getLast4(), value.getExpiry(), value.getBrand());
+        return new PaymentCard(
+                value.getHolder(),
+                value.getNumber(),
+                value.getCvv(),
+                value.getLast4(),
+                value.getExpiry(),
+                value.getBrand());
     }
 
     private static PaymentCardPersistenceEmbeddable toPersistenceFromDomain(PaymentCard value) {
-        return new PaymentCardPersistenceEmbeddable(value.holder(), value.last4(), value.expiry(), value.brand());
+        return new PaymentCardPersistenceEmbeddable(
+                value.holder(),
+                value.number(),
+                value.cvv(),
+                value.last4(),
+                value.expiry(),
+                value.brand());
     }
 }

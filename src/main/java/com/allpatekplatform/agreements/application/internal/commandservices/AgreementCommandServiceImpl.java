@@ -2,6 +2,7 @@ package com.allpatekplatform.agreements.application.internal.commandservices;
 
 import com.allpatekplatform.agreements.application.commandservices.AgreementCommandService;
 import com.allpatekplatform.agreements.domain.model.aggregates.Agreement;
+import com.allpatekplatform.agreements.domain.model.commands.DeleteAgreementCommand;
 import com.allpatekplatform.agreements.domain.model.commands.SaveAgreementCommand;
 import com.allpatekplatform.agreements.domain.repositories.AgreementRepository;
 import com.allpatekplatform.shared.application.result.ApplicationError;
@@ -22,5 +23,15 @@ public class AgreementCommandServiceImpl implements AgreementCommandService {
     @Transactional
     public Result<Agreement, ApplicationError> handle(SaveAgreementCommand command) {
         return Result.success(agreementRepository.save(new Agreement(command)));
+    }
+
+    @Override
+    @Transactional
+    public Result<Void, ApplicationError> handle(DeleteAgreementCommand command) {
+        if (!agreementRepository.existsById(command.id())) {
+            return Result.failure(ApplicationError.notFound("AGREEMENT", command.id()));
+        }
+        agreementRepository.deleteById(command.id());
+        return Result.success(null);
     }
 }

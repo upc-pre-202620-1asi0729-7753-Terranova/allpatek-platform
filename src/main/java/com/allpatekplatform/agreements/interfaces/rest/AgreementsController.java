@@ -2,15 +2,20 @@ package com.allpatekplatform.agreements.interfaces.rest;
 
 import com.allpatekplatform.agreements.application.commandservices.AgreementCommandService;
 import com.allpatekplatform.agreements.application.queryservices.AgreementQueryService;
+import com.allpatekplatform.agreements.domain.model.commands.DeleteAgreementCommand;
 import com.allpatekplatform.agreements.domain.model.queries.GetAllAgreementsQuery;
 import com.allpatekplatform.agreements.interfaces.rest.resources.AgreementResource;
 import com.allpatekplatform.agreements.interfaces.rest.transform.AgreementResourceAssembler;
+import com.allpatekplatform.shared.application.result.ApplicationError;
+import com.allpatekplatform.shared.application.result.Result;
+import com.allpatekplatform.shared.interfaces.rest.transform.ProblemDetailFromApplicationErrorAssembler;
 import com.allpatekplatform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,5 +73,18 @@ public class AgreementsController {
                 agreementCommandService.handle(AgreementResourceAssembler.toCommand(id, resource)),
                 AgreementResourceAssembler::toResourceFromEntity,
                 HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteAgreement(
+            @PathVariable String id,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
+    ) {
+        var result = agreementCommandService.handle(new DeleteAgreementCommand(id));
+        return switch (result) {
+            case Result.Success<Void, ApplicationError> ignored -> ResponseEntity.noContent().build();
+            case Result.Failure<Void, ApplicationError> failure ->
+                    ProblemDetailFromApplicationErrorAssembler.toResponseFromApplicationError(failure.error());
+        };
     }
 }

@@ -2,6 +2,7 @@ package com.allpatekplatform.tracking.application.internal.commandservices;
 
 import com.allpatekplatform.tracking.application.commandservices.EvidenceCommandService;
 import com.allpatekplatform.tracking.domain.model.aggregates.MilestoneEvidence;
+import com.allpatekplatform.tracking.domain.model.commands.DeleteEvidenceCommand;
 import com.allpatekplatform.tracking.domain.model.commands.SaveEvidenceCommand;
 import com.allpatekplatform.tracking.domain.repositories.EvidenceRepository;
 import com.allpatekplatform.shared.application.result.ApplicationError;
@@ -22,5 +23,15 @@ public class EvidenceCommandServiceImpl implements EvidenceCommandService {
     @Transactional
     public Result<MilestoneEvidence, ApplicationError> handle(SaveEvidenceCommand command) {
         return Result.success(evidenceRepository.save(new MilestoneEvidence(command)));
+    }
+
+    @Override
+    @Transactional
+    public Result<Void, ApplicationError> handle(DeleteEvidenceCommand command) {
+        if (!evidenceRepository.existsById(command.id())) {
+            return Result.failure(ApplicationError.notFound("EVIDENCE", command.id()));
+        }
+        evidenceRepository.deleteById(command.id());
+        return Result.success(null);
     }
 }

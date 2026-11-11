@@ -7,6 +7,7 @@ import com.allpatekplatform.alerts.domain.model.valueobjects.WeatherSnapshot;
 import com.allpatekplatform.shared.application.result.ApplicationError;
 import com.allpatekplatform.shared.application.result.Result;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -24,6 +25,8 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
             "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m,cloud_cover,weather_code";
     private static final String DAILY =
             "temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max";
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final RestClient restClient;
     private final String baseUrl;
@@ -48,17 +51,18 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
                     .queryParam("timezone", "auto")
                     .build(true)
                     .toUri();
-            JsonNode payload = restClient.get()
+            String json = restClient.get()
                     .uri(uri)
                     .retrieve()
-                    .body(JsonNode.class);
+                    .body(String.class);
+            JsonNode payload = json == null || json.isBlank() ? null : MAPPER.readTree(json);
             List<JsonNode> blocks = blocks(payload, places.size());
             List<ClimateReading> readings = new ArrayList<>();
             for (int index = 0; index < places.size(); index++) {
                 readings.add(toReading(places.get(index), blocks.get(index)));
             }
             return Result.success(List.copyOf(readings));
-        } catch (RuntimeException exception) {
+        } catch (Exception exception) {
             return Result.failure(ApplicationError.unexpected("OPEN_METEO", exception.getMessage()));
         }
     }
