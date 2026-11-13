@@ -4,6 +4,7 @@ import com.allpatekplatform.parcels.application.commandservices.ParcelCommandSer
 import com.allpatekplatform.parcels.domain.model.aggregates.Parcel;
 import com.allpatekplatform.parcels.domain.model.commands.CreateParcelCommand;
 import com.allpatekplatform.parcels.domain.model.commands.DeleteParcelCommand;
+import com.allpatekplatform.parcels.domain.model.commands.MarkParcelInProductionCommand;
 import com.allpatekplatform.parcels.domain.model.commands.UpdateParcelCommand;
 import com.allpatekplatform.parcels.domain.repositories.ParcelRepository;
 import com.allpatekplatform.shared.application.result.ApplicationError;
@@ -51,5 +52,16 @@ public class ParcelCommandServiceImpl implements ParcelCommandService {
         }
         parcelRepository.deleteById(command.id());
         return Result.success(null);
+    }
+
+    @Override
+    @Transactional
+    public Result<Parcel, ApplicationError> handle(MarkParcelInProductionCommand command) {
+        return parcelRepository.findById(command.parcelId())
+                .map(parcel -> {
+                    parcel.markInProduction();
+                    return Result.<Parcel, ApplicationError>success(parcelRepository.save(parcel));
+                })
+                .orElseGet(() -> Result.failure(ApplicationError.notFound("PARCEL", command.parcelId())));
     }
 }

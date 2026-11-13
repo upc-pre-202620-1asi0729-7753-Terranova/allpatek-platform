@@ -105,4 +105,8 @@ public class Parcel extends AbstractDomainAggregateRoot<Parcel> {
         this.crops = updated.crops;
         this.media = updated.media;
     }
+
+    public void markInProduction() {
+        this.status = ParcelStatus.in_production;
+    }
 }

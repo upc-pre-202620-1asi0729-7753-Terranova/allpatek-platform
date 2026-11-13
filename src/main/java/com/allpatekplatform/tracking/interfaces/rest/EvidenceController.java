@@ -2,15 +2,20 @@ package com.allpatekplatform.tracking.interfaces.rest;
 
 import com.allpatekplatform.tracking.application.commandservices.EvidenceCommandService;
 import com.allpatekplatform.tracking.application.queryservices.EvidenceQueryService;
+import com.allpatekplatform.tracking.domain.model.commands.DeleteEvidenceCommand;
 import com.allpatekplatform.tracking.domain.model.queries.GetAllEvidenceQuery;
 import com.allpatekplatform.tracking.interfaces.rest.resources.EvidenceResource;
 import com.allpatekplatform.tracking.interfaces.rest.transform.EvidenceResourceAssembler;
+import com.allpatekplatform.shared.application.result.ApplicationError;
+import com.allpatekplatform.shared.application.result.Result;
+import com.allpatekplatform.shared.interfaces.rest.transform.ProblemDetailFromApplicationErrorAssembler;
 import com.allpatekplatform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,5 +73,18 @@ public class EvidenceController {
                 evidenceCommandService.handle(EvidenceResourceAssembler.toCommand(id, resource)),
                 EvidenceResourceAssembler::toResourceFromEntity,
                 HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteEvidence(
+            @PathVariable String id,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
+    ) {
+        var result = evidenceCommandService.handle(new DeleteEvidenceCommand(id));
+        return switch (result) {
+            case Result.Success<Void, ApplicationError> ignored -> ResponseEntity.noContent().build();
+            case Result.Failure<Void, ApplicationError> failure ->
+                    ProblemDetailFromApplicationErrorAssembler.toResponseFromApplicationError(failure.error());
+        };
     }
 }

@@ -8,5 +8,9 @@ public interface AgreementRepository {
 
     Agreement save(Agreement agreement);
 
+    boolean existsById(String id);
+
     List<Agreement> findAll();
+
+    void deleteById(String id);
 }

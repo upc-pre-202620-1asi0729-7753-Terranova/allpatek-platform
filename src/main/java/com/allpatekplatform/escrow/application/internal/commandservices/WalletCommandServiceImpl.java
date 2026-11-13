@@ -4,6 +4,7 @@ import com.allpatekplatform.shared.application.result.ApplicationError;
 import com.allpatekplatform.shared.application.result.Result;
 import com.allpatekplatform.escrow.application.commandservices.WalletCommandService;
 import com.allpatekplatform.escrow.domain.model.aggregates.Wallet;
+import com.allpatekplatform.escrow.domain.model.commands.DeleteWalletCommand;
 import com.allpatekplatform.escrow.domain.model.commands.SaveWalletCommand;
 import com.allpatekplatform.escrow.domain.repositories.WalletRepository;
 import org.springframework.stereotype.Service;
@@ -22,5 +23,15 @@ public class WalletCommandServiceImpl implements WalletCommandService {
     @Transactional
     public Result<Wallet, ApplicationError> handle(SaveWalletCommand command) {
         return Result.success(walletRepository.save(new Wallet(command)));
+    }
+
+    @Override
+    @Transactional
+    public Result<Void, ApplicationError> handle(DeleteWalletCommand command) {
+        if (!walletRepository.existsById(command.id())) {
+            return Result.failure(ApplicationError.notFound("WALLET", command.id()));
+        }
+        walletRepository.deleteById(command.id());
+        return Result.success(null);
     }
 }

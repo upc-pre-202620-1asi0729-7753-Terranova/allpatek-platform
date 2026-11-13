@@ -1,8 +1,12 @@
 package com.allpatekplatform.escrow.interfaces.rest;
 
+import com.allpatekplatform.shared.application.result.ApplicationError;
+import com.allpatekplatform.shared.application.result.Result;
+import com.allpatekplatform.shared.interfaces.rest.transform.ProblemDetailFromApplicationErrorAssembler;
 import com.allpatekplatform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import com.allpatekplatform.escrow.application.commandservices.WalletCommandService;
 import com.allpatekplatform.escrow.application.queryservices.WalletQueryService;
+import com.allpatekplatform.escrow.domain.model.commands.DeleteWalletCommand;
 import com.allpatekplatform.escrow.domain.model.queries.GetAllWalletsQuery;
 import com.allpatekplatform.escrow.interfaces.rest.resources.WalletResource;
 import com.allpatekplatform.escrow.interfaces.rest.transform.WalletResourceAssembler;
@@ -11,6 +15,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,5 +70,18 @@ public class WalletsController {
                 walletCommandService.handle(WalletResourceAssembler.toCommand(id, resource)),
                 WalletResourceAssembler::toResourceFromEntity,
                 HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteWallet(
+            @PathVariable String id,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
+    ) {
+        var result = walletCommandService.handle(new DeleteWalletCommand(id));
+        return switch (result) {
+            case Result.Success<Void, ApplicationError> ignored -> ResponseEntity.noContent().build();
+            case Result.Failure<Void, ApplicationError> failure ->
+                    ProblemDetailFromApplicationErrorAssembler.toResponseFromApplicationError(failure.error());
+        };
     }
 }

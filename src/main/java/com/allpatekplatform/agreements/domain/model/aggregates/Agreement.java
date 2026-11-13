@@ -1,6 +1,7 @@
 package com.allpatekplatform.agreements.domain.model.aggregates;
 
 import com.allpatekplatform.agreements.domain.model.commands.SaveAgreementCommand;
+import com.allpatekplatform.agreements.domain.model.events.AgreementFullySignedEvent;
 import com.allpatekplatform.agreements.domain.model.valueobjects.AgreementDate;
 import com.allpatekplatform.agreements.domain.model.valueobjects.AgreementId;
 import com.allpatekplatform.agreements.domain.model.valueobjects.ContractSignatures;
@@ -49,5 +50,16 @@ public class Agreement extends AbstractDomainAggregateRoot<Agreement> {
                 new ProfileId(command.merchantProfileId()),
                 new ContractSignatures(command.merchantSigned(), command.farmerSigned()),
                 new AgreementDate(command.createdAt()));
+    }
+
+    public boolean isFullySigned() {
+        return signatures.isComplete();
+    }
+
+    /**
+     * Called by the repository adapter after persist when both signatures are present.
+     */
+    public void onFullySigned() {
+        registerDomainEvent(AgreementFullySignedEvent.from(this));
     }
 }

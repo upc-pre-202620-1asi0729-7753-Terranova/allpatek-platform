@@ -32,7 +32,13 @@ public class Wallet extends AbstractDomainAggregateRoot<Wallet> {
         this(
                 new WalletId(command.id()),
                 new ProfileId(command.profileId()),
-                new PaymentCard(command.holder(), command.last4(), command.expiry(), command.brand()),
+                new PaymentCard(
+                        command.holder(),
+                        command.number(),
+                        command.cvv(),
+                        command.last4(),
+                        command.expiry(),
+                        command.brand()),
                 new MoneyCents(command.openingCents()));
     }
 }
