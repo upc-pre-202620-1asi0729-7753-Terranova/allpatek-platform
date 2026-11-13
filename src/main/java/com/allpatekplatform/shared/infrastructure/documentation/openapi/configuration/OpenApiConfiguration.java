@@ -32,6 +32,6 @@ public class OpenApiConfiguration {
                         .version(applicationVersion)
                         .contact(new Contact().name("Allpatek").email("support@allpatek.com"))
                         .license(new License().name("MIT").url("https://opensource.org/licenses/MIT")))
-                .servers(List.of(new Server().url("http://localhost:8090").description("Local Development")));
+                .servers(List.of(new Server().url("/").description("Current host")));
     }
 }
