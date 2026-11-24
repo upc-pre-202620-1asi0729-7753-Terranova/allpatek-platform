@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.text.MessageFormat;
 import java.util.LinkedHashMap;
@@ -61,6 +62,13 @@ public class GlobalExceptionHandler {
                         exception.getMessage() != null
                                 ? exception.getMessage()
                                 : resolveMessageOrDefault("validation.request.failed", "Request validation failed")));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNoResourceFoundException(NoResourceFoundException exception) {
+        var problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Resource not found");
+        problemDetail.setTitle("Not Found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
     }
 
     @ExceptionHandler(RuntimeException.class)
