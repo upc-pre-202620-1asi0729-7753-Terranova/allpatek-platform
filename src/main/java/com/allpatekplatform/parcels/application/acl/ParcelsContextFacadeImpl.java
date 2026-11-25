@@ -1,10 +1,15 @@
-package com.allpatekplatform.parcels.interfaces.acl;
+package com.allpatekplatform.parcels.application.acl;
 
 import com.allpatekplatform.parcels.domain.repositories.ParcelRepository;
+import com.allpatekplatform.parcels.interfaces.acl.ParcelLocation;
+import com.allpatekplatform.parcels.interfaces.acl.ParcelsContextFacade;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Application-layer implementation of the Parcels ACL facade.
+ */
 @Service
 public class ParcelsContextFacadeImpl implements ParcelsContextFacade {
 
