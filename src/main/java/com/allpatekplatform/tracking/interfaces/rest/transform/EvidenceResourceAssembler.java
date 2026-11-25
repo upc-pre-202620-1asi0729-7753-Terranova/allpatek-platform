@@ -13,6 +13,7 @@ public final class EvidenceResourceAssembler {
         return new EvidenceResource(
                 evidence.getId().value(),
                 evidence.getParcelId().value(),
+                evidence.getAgreementId().value(),
                 evidence.getMilestone().value(),
                 evidence.getStatus().name(),
                 evidence.getNotes().value(),
@@ -24,6 +25,7 @@ public final class EvidenceResourceAssembler {
         return new SaveEvidenceCommand(
                 id != null ? id : resource.id(),
                 resource.parcelId(),
+                resource.agreementId(),
                 resource.milestone() == null ? 0 : resource.milestone(),
                 resource.status(),
                 resource.notes(),

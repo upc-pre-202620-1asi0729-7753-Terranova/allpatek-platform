@@ -7,6 +7,7 @@ public record EvidenceResource(
         String id,
         @NotBlank(message = "{validation.not-blank}")
         String parcelId,
+        String agreementId,
         @NotNull(message = "{validation.not-null}")
         Integer milestone,
         String status,
