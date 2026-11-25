@@ -4,8 +4,6 @@ public record SaveWalletCommand(
         String id,
         Long profileId,
         String holder,
-        String number,
-        String cvv,
         String last4,
         String expiry,
         String brand,

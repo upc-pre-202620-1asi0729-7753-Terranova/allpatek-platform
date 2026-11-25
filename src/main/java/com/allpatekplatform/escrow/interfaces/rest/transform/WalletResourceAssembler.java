@@ -15,8 +15,8 @@ public final class WalletResourceAssembler {
                 wallet.getId().value(),
                 wallet.getProfileId().value(),
                 card.holder(),
-                card.number(),
-                card.cvv(),
+                null,
+                null,
                 card.last4(),
                 card.expiry(),
                 card.brand(),
@@ -25,20 +25,12 @@ public final class WalletResourceAssembler {
 
     public static SaveWalletCommand toCommand(String id, WalletResource resource) {
         var digits = digits(resource.number());
-        var cvv = digits(resource.cvv());
-        if (digits.length() != 16) {
-            throw new IllegalArgumentException("Card number must be 16 digits.");
-        }
-        if (cvv.length() < 3 || cvv.length() > 4) {
-            throw new IllegalArgumentException("CVV must be 3 or 4 digits.");
-        }
+        var last4 = last4From(resource.last4(), digits);
         return new SaveWalletCommand(
                 id != null ? id : resource.id(),
                 resource.profileId(),
                 resource.holder(),
-                digits,
-                cvv,
-                digits.substring(12),
+                last4,
                 resource.expiry(),
                 brandFrom(digits, resource.brand()),
                 resource.openingCents() == null ? 0 : resource.openingCents());
@@ -46,6 +38,16 @@ public final class WalletResourceAssembler {
 
     private static String digits(String value) {
         return value == null ? "" : value.replaceAll("\\D", "");
+    }
+
+    private static String last4From(String last4, String digits) {
+        if (last4 != null && last4.matches("\\d{4}")) {
+            return last4;
+        }
+        if (digits.length() >= 4) {
+            return digits.substring(digits.length() - 4);
+        }
+        return last4;
     }
 
     private static String brandFrom(String digits, String brand) {
