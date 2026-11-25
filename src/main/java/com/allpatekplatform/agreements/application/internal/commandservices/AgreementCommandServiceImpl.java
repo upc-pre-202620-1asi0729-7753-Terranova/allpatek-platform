@@ -4,6 +4,7 @@ import com.allpatekplatform.agreements.application.commandservices.AgreementComm
 import com.allpatekplatform.agreements.domain.model.aggregates.Agreement;
 import com.allpatekplatform.agreements.domain.model.commands.DeleteAgreementCommand;
 import com.allpatekplatform.agreements.domain.model.commands.SaveAgreementCommand;
+import com.allpatekplatform.agreements.domain.model.commands.SignFarmerCommand;
 import com.allpatekplatform.agreements.domain.repositories.AgreementRepository;
 import com.allpatekplatform.shared.application.result.ApplicationError;
 import com.allpatekplatform.shared.application.result.Result;
@@ -23,6 +24,15 @@ public class AgreementCommandServiceImpl implements AgreementCommandService {
     @Transactional
     public Result<Agreement, ApplicationError> handle(SaveAgreementCommand command) {
         return Result.success(agreementRepository.save(new Agreement(command)));
+    }
+
+    @Override
+    @Transactional
+    public Result<Agreement, ApplicationError> handle(SignFarmerCommand command) {
+        return agreementRepository.findById(command.agreementId())
+                .<Result<Agreement, ApplicationError>>map(agreement ->
+                        Result.success(agreementRepository.save(agreement.withFarmerSignature())))
+                .orElseGet(() -> Result.failure(ApplicationError.notFound("AGREEMENT", command.agreementId())));
     }
 
     @Override

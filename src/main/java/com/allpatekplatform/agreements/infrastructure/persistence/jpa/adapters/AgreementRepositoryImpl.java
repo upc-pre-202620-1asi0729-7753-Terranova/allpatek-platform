@@ -8,6 +8,7 @@ import com.allpatekplatform.shared.infrastructure.events.DomainEventPublisher;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class AgreementRepositoryImpl implements AgreementRepository {
@@ -40,6 +41,11 @@ public class AgreementRepositoryImpl implements AgreementRepository {
             domainEventPublisher.publishAndClearEvents(saved);
         }
         return saved;
+    }
+
+    @Override
+    public Optional<Agreement> findById(String id) {
+        return persistenceRepository.findById(id).map(AgreementPersistenceAssembler::toDomainFromPersistence);
     }
 
     @Override
