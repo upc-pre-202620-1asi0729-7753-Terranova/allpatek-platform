@@ -72,7 +72,10 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
                     .queryParam("longitude", join(places, ParcelCoordinates::longitude))
                     .queryParam("current", CURRENT)
                     .queryParam("daily", DAILY)
-                    .queryParam("forecast_days", "2")
+                    .queryParam("forecast_days", "1")
+                    .queryParam("temperature_unit", "celsius")
+                    .queryParam("wind_speed_unit", "kmh")
+                    .queryParam("precipitation_unit", "mm")
                     .queryParam("timezone", "auto")
                     .build(true)
                     .toUri();
