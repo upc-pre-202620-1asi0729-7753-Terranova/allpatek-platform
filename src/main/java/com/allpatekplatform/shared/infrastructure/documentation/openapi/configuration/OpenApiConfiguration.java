@@ -37,8 +37,9 @@ public class OpenApiConfiguration {
                         .contact(new Contact().name("Allpatek").email("support@allpatek.com"))
                         .license(new License().name("MIT").url("https://opensource.org/licenses/MIT")))
                 .servers(List.of(
-                        new Server().url("http://localhost:8090").description("Local development"),
-                        new Server().url("/").description("Current host")))
+                        new Server().url("/").description("Current host"),
+                        new Server().url("https://allpatek.proyectaconsultora.com").description("Production"),
+                        new Server().url("http://localhost:8090").description("Local development")))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components().addSecuritySchemes(securitySchemeName, new SecurityScheme()
                         .name(securitySchemeName)
