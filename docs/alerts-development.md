@@ -2,31 +2,30 @@
 
 ## Context boundaries
 
-The REST controller resolves the current profile and issues an owner-scoped query.
-`ExternalParcelService` translates the parcels facade's location DTOs into alert
-coordinates. The parcels facade rejects missing owners and executes an owner predicate
-through its repository; it does not load every owner's portfolio into memory.
+`AlertsController` reads the authenticated account's username and resolves its profile
+through `ExternalProfileService`. That adapter calls `ProfilesContextFacade`, which
+exposes only the profile identifier. Alerts does not import the profiles domain or
+infrastructure packages. A missing profile stops the request before querying parcels.
 
-Domain objects validate coordinates and physical measurement ranges. `WeatherRiskPolicy`
-contains the existing thresholds. `OpenMeteoResponseParser` validates forecast shape,
-numeric fields, daily arrays, response counts and supported weather codes.
+`ClimateQueryServiceImpl` handles `GetClimateAlertsQuery`. It uses `ExternalParcelService`
+to translate published parcel location DTOs into alert coordinates. The parcels facade
+rejects missing owners and its repository filters the portfolio by owner in the database.
 
-The provider adapter sends unique coordinate pairs in bounded batches. After fetching,
-it restores the original parcel identities and order. Deduplication lasts for a single
-request: there is no cross-account or persistent weather cache and no stale fallback.
-Requests are sequential; no automatic retry loop amplifies rate-limited requests.
+Domain objects validate coordinates and measurements. `WeatherRiskPolicy` contains the
+existing thresholds. `OpenMeteoResponseParser` validates forecast shape, numeric fields,
+daily arrays, response counts and supported weather codes. Expected failures use
+`Result` and `ApplicationError`; the REST boundary uses the shared response assembler.
 
-## Configuration
+## Weather provider
 
-| Spring property | Default | Constraint |
-| --- | --- | --- |
-| weather.open-meteo.base-url | https://api.open-meteo.com/v1/forecast | configured provider endpoint |
-| weather.open-meteo.connect-timeout-ms | 2000 | positive milliseconds |
-| weather.open-meteo.read-timeout-ms | 5000 | positive milliseconds |
-| weather.open-meteo.batch-size | 50 | 1 through 100 coordinate pairs |
+The existing `RestClient` adapter sends one forecast request for the owned parcel
+coordinates. It keeps the original order and produces a separate reading for each
+parcel, including parcels that share coordinates. The endpoint is configured by
+`weather.open-meteo.base-url`, whose default is `https://api.open-meteo.com/v1/forecast`.
 
-Timeouts apply to each provider request. Several sequential batches can take longer
-than a single timeout. Deployment request limits should account for this behavior.
+The adapter requests Celsius, millimetres and kilometres per hour, using the first
+daily forecast in the provider's local timezone. Invalid or missing measurements
+fail the request instead of becoming synthetic zero-valued readings.
 
 ## Verification
 
@@ -36,15 +35,15 @@ Install JDK 27 and set `JAVA_HOME` before using the Maven wrapper:
 .\mvnw.cmd -B clean verify
 ```
 
-On Unix use `./mvnw -B clean verify`. Tests require no production credentials.
-The test profile uses an in-memory H2 database in MySQL compatibility mode with
-create/drop schema management. Only test scope includes H2 and security test helpers.
-H2 verifies the JPA owner predicate; it does not replace deployment checks on MySQL.
+On Unix use `./mvnw -B clean verify`. Domain tests use real value objects and readings.
+Application tests use JUnit and Mockito to replace injected facade and weather service
+dependencies. Parser tests exercise provider payloads without making HTTP requests.
+REST tests verify resource shapes, owner selection and ProblemDetail responses.
 
-Provider tests use Spring's mock HTTP server. The test profile points weather requests
-at a closed loopback port so accidental provider calls fail locally. Regression tests
-cover missing profiles, owner filtering, malformed coordinates, zero-valued readings,
-weather rules, invalid payloads, transport failures, batching and REST resources.
-Full-context tests exercise the security filter chain and database-backed facade.
+Full-context tests use Spring Boot Test and an isolated H2 database in MySQL compatibility
+mode. They verify authentication, missing profiles and the database owner predicate.
+Test data is rolled back. H2 and security test helpers are restricted to test scope.
+The test profile points weather requests at a closed loopback port.
 
-The tests do not contact Open-Meteo or validate availability of a deployed instance.
+Tests require no production credentials and do not contact Open-Meteo. H2 verifies the
+JPA query but does not replace deployment checks on MySQL or provider availability checks.

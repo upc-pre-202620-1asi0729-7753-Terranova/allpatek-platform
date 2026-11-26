@@ -2,7 +2,6 @@
 
 `GET /api/v1/alerts` requires a bearer token and an existing account profile.
 The owner is resolved from the authenticated account; clients cannot select an owner.
-Responses use `Cache-Control: no-store` on success and application errors.
 
 ## Success
 
@@ -46,8 +45,7 @@ Errors use the application's ProblemDetail format and include a `code`.
 | 400 | VALIDATION_ERROR for invalid coordinates in an owned parcel |
 | 502 | WEATHER_BAD_GATEWAY: incomplete, malformed or rejected forecast |
 | 503 | WEATHER_UNAVAILABLE: connection failure, provider rate limit or server failure |
-| 504 | WEATHER_TIMEOUT: provider connection/read timeout |
 
-If one owned parcel has invalid coordinates, or one forecast batch fails, the request
-fails as a whole. Partial arrays are not reported as complete success. Provider response
+If one owned parcel has invalid coordinates, or the forecast response is invalid, the
+request fails as a whole. Partial arrays are not reported as complete success. Provider response
 bodies and exception messages are not forwarded in weather error details.
