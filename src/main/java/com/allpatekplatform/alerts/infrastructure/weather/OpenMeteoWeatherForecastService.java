@@ -8,7 +8,6 @@ import com.allpatekplatform.shared.application.result.Result;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
@@ -35,9 +34,8 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
     private final RestClient restClient;
     private final String baseUrl;
 
-    public OpenMeteoWeatherForecastService(@Qualifier("openMeteoRestClient") RestClient restClient,
-            @Value("${weather.open-meteo.base-url}") String baseUrl) {
-        this.restClient = restClient;
+    public OpenMeteoWeatherForecastService(@Value("${weather.open-meteo.base-url}") String baseUrl) {
+        this.restClient = RestClient.builder().build();
         this.baseUrl = baseUrl;
     }
 
@@ -78,7 +76,7 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
             int status = exception.getStatusCode().value();
             return failure(status == 429 || status >= 500 ? "WEATHER_UNAVAILABLE" : "WEATHER_BAD_GATEWAY");
         } catch (ResourceAccessException exception) {
-            return failure(isTimeout(exception) ? "WEATHER_TIMEOUT" : "WEATHER_UNAVAILABLE");
+            return failure("WEATHER_UNAVAILABLE");
         } catch (JsonProcessingException | IllegalArgumentException exception) {
             return failure("WEATHER_BAD_GATEWAY");
         } catch (RestClientException exception) {
@@ -88,14 +86,6 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
 
     private static Result<List<ClimateReading>, ApplicationError> failure(String code) {
         return Result.failure(new ApplicationError(code, "Weather data is temporarily unavailable."));
-    }
-
-    private static boolean isTimeout(Throwable exception) {
-        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
-            if (cause instanceof java.net.SocketTimeoutException || cause instanceof java.net.http.HttpTimeoutException)
-                return true;
-        }
-        return false;
     }
 
     private static String join(List<ParcelCoordinates> places, java.util.function.ToDoubleFunction<ParcelCoordinates> value) {
