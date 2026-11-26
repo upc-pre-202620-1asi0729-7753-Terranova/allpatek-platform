@@ -8,6 +8,13 @@ import com.allpatekplatform.shared.application.result.ApplicationError;
 import com.allpatekplatform.shared.application.result.Result;
 import com.allpatekplatform.shared.domain.model.valueobjects.ProfileId;
 import com.allpatekplatform.shared.interfaces.rest.transform.ResponseEntityAssembler;
+import com.allpatekplatform.alerts.interfaces.rest.resources.ClimateReadingResource;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,6 +40,16 @@ public class AlertsController {
     }
 
     @GetMapping
+    @Operation(summary = "Get climate alerts", description = "Returns climate readings and alerts for the authenticated account's parcels.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Climate readings retrieved",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ClimateReadingResource.class)))),
+            @ApiResponse(responseCode = "400", description = "An owned parcel has invalid coordinates"),
+            @ApiResponse(responseCode = "401", description = "Authentication is required"),
+            @ApiResponse(responseCode = "404", description = "The account has no profile"),
+            @ApiResponse(responseCode = "502", description = "Invalid weather provider response"),
+            @ApiResponse(responseCode = "503", description = "Weather provider unavailable")
+    })
     public ResponseEntity<?> getAlerts(
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage,
             Authentication authentication
