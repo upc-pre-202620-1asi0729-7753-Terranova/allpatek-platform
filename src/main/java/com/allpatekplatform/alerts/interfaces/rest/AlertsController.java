@@ -34,9 +34,9 @@ public class AlertsController {
     public ResponseEntity<?> getAlerts(
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
     ) {
-        Long ownerId = currentAccountService.profileId().orElse(null);
+        var profile = currentAccountService.requireProfile();
         return ResponseEntityAssembler.toResponseEntityFromResult(
-                climateQueryService.handle(new GetClimateAlertsQuery(ownerId))
+                profile.flatMap(account -> climateQueryService.handle(new GetClimateAlertsQuery(account.getId().value())))
                         .map(ClimateReadingResourceAssembler::toResourceFromEntities),
                 readings -> readings,
                 HttpStatus.OK);
