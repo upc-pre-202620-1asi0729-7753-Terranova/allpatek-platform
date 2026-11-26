@@ -15,6 +15,11 @@ final class OpenMeteoResponseParser {
         }
         if (blocks.size() != expected)
             throw new IllegalArgumentException("Forecast response count does not match requested locations.");
+        for (JsonNode block : blocks) {
+            if (!block.isObject() || block.path("error").asBoolean(false)
+                    || !block.path("current").isObject() || !block.path("daily").isObject())
+                throw new IllegalArgumentException("Invalid forecast response structure.");
+        }
         return blocks;
     }
 
