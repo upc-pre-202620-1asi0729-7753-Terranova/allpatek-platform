@@ -7,7 +7,6 @@ import com.allpatekplatform.profiles.infrastructure.security.CurrentAccountServi
 import com.allpatekplatform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,12 +35,10 @@ public class AlertsController {
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
     ) {
         var profile = currentAccountService.requireProfile();
-        var response = ResponseEntityAssembler.toResponseEntityFromResult(
+        return ResponseEntityAssembler.toResponseEntityFromResult(
                 profile.flatMap(account -> climateQueryService.handle(new GetClimateAlertsQuery(account.getId().value())))
                         .map(ClimateReadingResourceAssembler::toResourceFromEntities),
                 readings -> readings,
                 HttpStatus.OK);
-        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders())
-                .cacheControl(CacheControl.noStore()).body(response.getBody());
     }
 }

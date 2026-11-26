@@ -15,7 +15,7 @@ import java.util.List;
 
 class AlertsHttpContractTest {
 
-@Test void returnsPrivateJsonForTheCurrentOwner() throws Exception {
+@Test void returnsJsonForTheCurrentOwner() throws Exception {
     var accounts = mock(CurrentAccountService.class);
     var profile = mock(Profile.class);
     when(profile.getId()).thenReturn(new ProfileId(7L));
@@ -23,11 +23,11 @@ class AlertsHttpContractTest {
     var queries = mock(ClimateQueryService.class);
     when(queries.handle(any())).thenReturn(Result.success(List.of()));
     var mvc = MockMvcBuilders.standaloneSetup(new AlertsController(queries,accounts)).build();
-    mvc.perform(get("/api/v1/alerts")).andExpect(status().isOk()).andExpect(header().string("Cache-Control","no-store"))
+    mvc.perform(get("/api/v1/alerts")).andExpect(status().isOk())
             .andExpect(content().json("[]"));
     verify(queries).handle(new com.allpatekplatform.alerts.domain.model.queries.GetClimateAlertsQuery(7L));
 }
-@Test void mapsProviderTimeoutToProblemDetailAndDisablesCaching() throws Exception {
+@Test void mapsProviderTimeoutToProblemDetail() throws Exception {
     var accounts = mock(CurrentAccountService.class);
     var profile = mock(Profile.class);
     when(profile.getId()).thenReturn(new ProfileId(7L));
@@ -36,7 +36,7 @@ class AlertsHttpContractTest {
     when(queries.handle(any())).thenReturn(Result.failure(new ApplicationError("WEATHER_TIMEOUT","Unavailable")));
     var mvc = MockMvcBuilders.standaloneSetup(new AlertsController(queries,accounts)).build();
     mvc.perform(get("/api/v1/alerts")).andExpect(status().isGatewayTimeout())
-            .andExpect(header().string("Cache-Control","no-store")).andExpect(jsonPath("$.code").value("WEATHER_TIMEOUT"));
+            .andExpect(jsonPath("$.code").value("WEATHER_TIMEOUT"));
 }
 
 }
