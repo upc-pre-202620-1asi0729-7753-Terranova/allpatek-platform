@@ -9,6 +9,7 @@ import com.allpatekplatform.shared.application.result.Result;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -31,8 +32,9 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
     private final RestClient restClient;
     private final String baseUrl;
 
-    public OpenMeteoWeatherForecastService(@Value("${weather.open-meteo.base-url}") String baseUrl) {
-        this.restClient = RestClient.builder().build();
+    public OpenMeteoWeatherForecastService(@Qualifier("openMeteoRestClient") RestClient restClient,
+            @Value("${weather.open-meteo.base-url}") String baseUrl) {
+        this.restClient = restClient;
         this.baseUrl = baseUrl;
     }
 
