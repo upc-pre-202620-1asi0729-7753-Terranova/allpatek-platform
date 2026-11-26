@@ -12,7 +12,7 @@ import com.allpatekplatform.alerts.domain.model.valueobjects.ParcelCoordinates;
 class SharedCoordinatesTest {
 
 @Test void oneForecastStillProducesSeparateParcelAlerts() {
-    var client = ForecastClientFixture.client(1);
+    var client = ForecastClientFixture.client();
     client.server().expect(method(HttpMethod.GET)).andRespond(withSuccess(ForecastFixtures.json(),MediaType.APPLICATION_JSON));
     var readings = client.service().forecast(List.of(place(),ParcelCoordinates.fromLocation("p2","Second","-12,-77"))).toOptional().orElseThrow();
     assertEquals(2,readings.size());

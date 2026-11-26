@@ -37,13 +37,9 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
 
     private final RestClient restClient;
     private final String baseUrl;
-    private final int batchSize;
 
     public OpenMeteoWeatherForecastService(@Qualifier("openMeteoRestClient") RestClient restClient,
-            @Value("${weather.open-meteo.base-url}") String baseUrl,
-            @Value("${weather.open-meteo.batch-size:50}") int batchSize) {
-        if (batchSize < 1 || batchSize > 100) throw new IllegalArgumentException("Weather batch size must be between 1 and 100.");
-        this.batchSize = batchSize;
+            @Value("${weather.open-meteo.base-url}") String baseUrl) {
         this.restClient = restClient;
         this.baseUrl = baseUrl;
     }
@@ -57,11 +53,9 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
         places.forEach(place -> unique.putIfAbsent(place.point(), place));
         var locations = List.copyOf(unique.values());
         var weather = new LinkedHashMap<GeoPoint, WeatherSnapshot>();
-        for (int offset = 0; offset < locations.size(); offset += batchSize) {
-            var result = fetch(locations.subList(offset, Math.min(offset + batchSize, locations.size())));
-            if (result instanceof Result.Failure<List<ClimateReading>, ApplicationError>) return result;
-            result.toOptional().orElseThrow().forEach(reading -> weather.put(reading.place().point(), reading.weather()));
-        }
+        var result = fetch(locations);
+        if (result instanceof Result.Failure<List<ClimateReading>, ApplicationError>) return result;
+        result.toOptional().orElseThrow().forEach(reading -> weather.put(reading.place().point(), reading.weather()));
         return Result.success(places.stream().map(place -> ClimateReading.of(place, weather.get(place.point()))).toList());
     }
 
