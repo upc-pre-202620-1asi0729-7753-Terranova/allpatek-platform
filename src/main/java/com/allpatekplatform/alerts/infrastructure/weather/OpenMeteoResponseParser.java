@@ -25,16 +25,16 @@ final class OpenMeteoResponseParser {
         double temperature = number(current, "temperature_2m");
         return ClimateReading.of(place, new WeatherSnapshot(
                 temperature,
-                firstNonZero(number(current, "apparent_temperature"), temperature),
+                number(current, "apparent_temperature"),
                 number(current, "relative_humidity_2m"),
                 number(current, "precipitation"),
                 number(current, "wind_speed_10m"),
                 number(current, "cloud_cover"),
                 (int) number(current, "weather_code"),
-                firstNonZero(first(daily, "temperature_2m_min"), temperature),
-                firstNonZero(first(daily, "temperature_2m_max"), temperature),
+                first(daily, "temperature_2m_min"),
+                first(daily, "temperature_2m_max"),
                 first(daily, "precipitation_sum"),
-                firstNonZero(first(daily, "wind_speed_10m_max"), number(current, "wind_speed_10m"))));
+                first(daily, "wind_speed_10m_max")));
     }
 
     private static double number(JsonNode node, String field) {
@@ -55,7 +55,4 @@ final class OpenMeteoResponseParser {
         return 0;
     }
 
-    private static double firstNonZero(double value, double fallback) {
-        return value == 0 ? fallback : value;
-    }
 }
