@@ -2,6 +2,7 @@ package com.allpatekplatform.escrow.interfaces.rest;
 
 import com.allpatekplatform.shared.application.result.ApplicationError;
 import com.allpatekplatform.shared.application.result.Result;
+import com.allpatekplatform.profiles.infrastructure.security.CurrentAccountService;
 import com.allpatekplatform.shared.interfaces.rest.transform.ProblemDetailFromApplicationErrorAssembler;
 import com.allpatekplatform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import com.allpatekplatform.escrow.application.commandservices.WalletCommandService;
@@ -15,6 +16,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,10 +36,16 @@ public class WalletsController {
 
     private final WalletCommandService walletCommandService;
     private final WalletQueryService walletQueryService;
+    private final CurrentAccountService currentAccountService;
 
-    public WalletsController(WalletCommandService walletCommandService, WalletQueryService walletQueryService) {
+    public WalletsController(
+            WalletCommandService walletCommandService,
+            WalletQueryService walletQueryService,
+            CurrentAccountService currentAccountService
+    ) {
         this.walletCommandService = walletCommandService;
         this.walletQueryService = walletQueryService;
+        this.currentAccountService = currentAccountService;
     }
 
     @GetMapping
@@ -50,24 +58,26 @@ public class WalletsController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_MERCHANT')")
     public ResponseEntity<?> createWallet(
             @Valid @RequestBody WalletResource resource,
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
     ) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
-                walletCommandService.handle(WalletResourceAssembler.toCommand(resource.id(), resource)),
+                walletCommandService.handle(WalletResourceAssembler.toCommand(resource.id(), withOwner(resource))),
                 WalletResourceAssembler::toResourceFromEntity,
                 HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_MERCHANT')")
     public ResponseEntity<?> updateWallet(
             @PathVariable String id,
             @Valid @RequestBody WalletResource resource,
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
     ) {
         return ResponseEntityAssembler.toResponseEntityFromResult(
-                walletCommandService.handle(WalletResourceAssembler.toCommand(id, resource)),
+                walletCommandService.handle(WalletResourceAssembler.toCommand(id, withOwner(resource))),
                 WalletResourceAssembler::toResourceFromEntity,
                 HttpStatus.OK);
     }
@@ -83,5 +93,19 @@ public class WalletsController {
             case Result.Failure<Void, ApplicationError> failure ->
                     ProblemDetailFromApplicationErrorAssembler.toResponseFromApplicationError(failure.error());
         };
+    }
+
+    private WalletResource withOwner(WalletResource resource) {
+        Long profileId = currentAccountService.profileId().orElse(resource.profileId());
+        return new WalletResource(
+                resource.id(),
+                profileId,
+                resource.holder(),
+                resource.number(),
+                resource.cvv(),
+                resource.last4(),
+                resource.expiry(),
+                resource.brand(),
+                resource.openingCents());
     }
 }

@@ -56,6 +56,26 @@ public class Agreement extends AbstractDomainAggregateRoot<Agreement> {
         return signatures.isComplete();
     }
 
+    public Agreement withMerchantSignature(String merchantName, Long merchantProfileId) {
+        return new Agreement(
+                id,
+                parcelId,
+                new MerchantName(merchantName),
+                new ProfileId(merchantProfileId),
+                new ContractSignatures(true, signatures.farmerSigned()),
+                createdAt);
+    }
+
+    public Agreement withFarmerSignature() {
+        return new Agreement(
+                id,
+                parcelId,
+                merchantName,
+                merchantProfileId,
+                new ContractSignatures(signatures.merchantSigned(), true),
+                createdAt);
+    }
+
     /**
      * Called by the repository adapter after persist when both signatures are present.
      */

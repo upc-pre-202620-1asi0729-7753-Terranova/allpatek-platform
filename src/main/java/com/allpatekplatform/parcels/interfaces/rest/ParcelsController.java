@@ -8,6 +8,7 @@ import com.allpatekplatform.parcels.interfaces.rest.resources.ParcelResource;
 import com.allpatekplatform.parcels.interfaces.rest.transform.ParcelResourceAssembler;
 import com.allpatekplatform.shared.application.result.ApplicationError;
 import com.allpatekplatform.shared.application.result.Result;
+import com.allpatekplatform.profiles.infrastructure.security.CurrentAccountService;
 import com.allpatekplatform.shared.interfaces.rest.transform.ProblemDetailFromApplicationErrorAssembler;
 import com.allpatekplatform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,6 +16,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,10 +36,16 @@ public class ParcelsController {
 
     private final ParcelCommandService parcelCommandService;
     private final ParcelQueryService parcelQueryService;
+    private final CurrentAccountService currentAccountService;
 
-    public ParcelsController(ParcelCommandService parcelCommandService, ParcelQueryService parcelQueryService) {
+    public ParcelsController(
+            ParcelCommandService parcelCommandService,
+            ParcelQueryService parcelQueryService,
+            CurrentAccountService currentAccountService
+    ) {
         this.parcelCommandService = parcelCommandService;
         this.parcelQueryService = parcelQueryService;
+        this.currentAccountService = currentAccountService;
     }
 
     @GetMapping
@@ -50,12 +58,28 @@ public class ParcelsController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_FARMER')")
     public ResponseEntity<?> createParcel(
             @Valid @RequestBody ParcelResource resource,
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
     ) {
+        Long ownerId = currentAccountService.profileId().orElse(resource.ownerId());
+        var command = ParcelResourceAssembler.toCreateCommand(new ParcelResource(
+                resource.id(),
+                ownerId,
+                resource.name(),
+                resource.status(),
+                resource.area(),
+                resource.location(),
+                resource.soilType(),
+                resource.campaignCost(),
+                resource.durationMonths(),
+                resource.startMonth(),
+                resource.crops(),
+                resource.imageUrl(),
+                resource.images()));
         return ResponseEntityAssembler.toResponseEntityFromResult(
-                parcelCommandService.handle(ParcelResourceAssembler.toCreateCommand(resource)),
+                parcelCommandService.handle(command),
                 ParcelResourceAssembler::toResourceFromEntity,
                 HttpStatus.CREATED);
     }

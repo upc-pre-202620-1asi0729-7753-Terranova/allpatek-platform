@@ -1,6 +1,7 @@
 package com.allpatekplatform.tracking.infrastructure.persistence.jpa.assemblers;
 
 import com.allpatekplatform.tracking.domain.model.aggregates.MilestoneEvidence;
+import com.allpatekplatform.tracking.domain.model.valueobjects.AgreementReference;
 import com.allpatekplatform.tracking.domain.model.valueobjects.EvidenceFile;
 import com.allpatekplatform.tracking.domain.model.valueobjects.EvidenceId;
 import com.allpatekplatform.tracking.domain.model.valueobjects.EvidenceNotes;
@@ -21,6 +22,7 @@ public final class EvidencePersistenceAssembler {
         return new MilestoneEvidence(
                 new EvidenceId(entity.getId()),
                 new ParcelId(entity.getParcelId()),
+                new AgreementReference(entity.getAgreementId()),
                 new MilestoneNumber(entity.getMilestone() == null ? 0 : entity.getMilestone()),
                 entity.getStatus(),
                 new EvidenceNotes(entity.getNotes()),
@@ -31,6 +33,7 @@ public final class EvidencePersistenceAssembler {
         EvidencePersistenceEntity entity = new EvidencePersistenceEntity();
         entity.setId(evidence.getId().value());
         entity.setParcelId(evidence.getParcelId().value());
+        entity.setAgreementId(evidence.getAgreementId().value());
         entity.setMilestone(evidence.getMilestone().value());
         entity.setStatus(evidence.getStatus());
         entity.setNotes(evidence.getNotes().value());

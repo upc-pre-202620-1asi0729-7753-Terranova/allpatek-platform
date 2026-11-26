@@ -21,6 +21,9 @@ public class EvidencePersistenceEntity extends StringIdentifiablePersistenceEnti
     @Column(name = "parcel_id", nullable = false, length = 160)
     private String parcelId;
 
+    @Column(name = "agreement_id", length = 160)
+    private String agreementId;
+
     @Column(nullable = false)
     private Integer milestone;
 

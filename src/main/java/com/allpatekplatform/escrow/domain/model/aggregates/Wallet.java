@@ -34,11 +34,22 @@ public class Wallet extends AbstractDomainAggregateRoot<Wallet> {
                 new ProfileId(command.profileId()),
                 new PaymentCard(
                         command.holder(),
-                        command.number(),
-                        command.cvv(),
                         command.last4(),
                         command.expiry(),
                         command.brand()),
                 new MoneyCents(command.openingCents()));
+    }
+
+    public static Wallet provision(Long profileId, String holder) {
+        String name = holder == null || holder.isBlank() ? "Comerciante Allpatek" : holder.trim();
+        return new Wallet(
+                new WalletId("wallet-" + profileId),
+                new ProfileId(profileId),
+                new PaymentCard(name, "4242", "12/28", "Visa"),
+                new MoneyCents(50_000));
+    }
+
+    public Wallet credit(int cents) {
+        return new Wallet(id, profileId, card, new MoneyCents(openingBalance.value() + cents));
     }
 }

@@ -3,6 +3,8 @@ package com.allpatekplatform.tracking.interfaces.rest;
 import com.allpatekplatform.tracking.application.commandservices.EvidenceCommandService;
 import com.allpatekplatform.tracking.application.queryservices.EvidenceQueryService;
 import com.allpatekplatform.tracking.domain.model.commands.DeleteEvidenceCommand;
+import com.allpatekplatform.tracking.domain.model.commands.ReleaseEvidenceCommand;
+import com.allpatekplatform.tracking.domain.model.commands.VerifyEvidenceCommand;
 import com.allpatekplatform.tracking.domain.model.queries.GetAllEvidenceQuery;
 import com.allpatekplatform.tracking.interfaces.rest.resources.EvidenceResource;
 import com.allpatekplatform.tracking.interfaces.rest.transform.EvidenceResourceAssembler;
@@ -10,11 +12,13 @@ import com.allpatekplatform.shared.application.result.ApplicationError;
 import com.allpatekplatform.shared.application.result.Result;
 import com.allpatekplatform.shared.interfaces.rest.transform.ProblemDetailFromApplicationErrorAssembler;
 import com.allpatekplatform.shared.interfaces.rest.transform.ResponseEntityAssembler;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -53,6 +57,7 @@ public class EvidenceController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('ROLE_FARMER')")
     public ResponseEntity<?> createEvidence(
             @Valid @RequestBody EvidenceResource resource,
             @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
@@ -61,6 +66,32 @@ public class EvidenceController {
                 evidenceCommandService.handle(EvidenceResourceAssembler.toCommand(resource.id(), resource)),
                 EvidenceResourceAssembler::toResourceFromEntity,
                 HttpStatus.CREATED);
+    }
+
+    @PostMapping("/{id}/verify")
+    @PreAuthorize("hasAuthority('ROLE_MERCHANT')")
+    @Operation(summary = "Merchant verifies submitted evidence")
+    public ResponseEntity<?> verifyEvidence(
+            @PathVariable String id,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
+    ) {
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                evidenceCommandService.handle(new VerifyEvidenceCommand(id)),
+                EvidenceResourceAssembler::toResourceFromEntity,
+                HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/release")
+    @PreAuthorize("hasAuthority('ROLE_MERCHANT')")
+    @Operation(summary = "Release the escrow share after verified evidence")
+    public ResponseEntity<?> releaseEvidence(
+            @PathVariable String id,
+            @RequestHeader(value = "Accept-Language", required = false) String acceptLanguage
+    ) {
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                evidenceCommandService.handle(new ReleaseEvidenceCommand(id)),
+                EvidenceResourceAssembler::toResourceFromEntity,
+                HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
