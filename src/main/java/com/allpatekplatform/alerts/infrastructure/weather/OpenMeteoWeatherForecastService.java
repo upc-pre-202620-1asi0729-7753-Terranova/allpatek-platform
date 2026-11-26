@@ -3,6 +3,8 @@ package com.allpatekplatform.alerts.infrastructure.weather;
 import com.allpatekplatform.alerts.application.internal.outboundservices.WeatherForecastService;
 import com.allpatekplatform.alerts.domain.model.aggregates.ClimateReading;
 import com.allpatekplatform.alerts.domain.model.valueobjects.ParcelCoordinates;
+import com.allpatekplatform.alerts.domain.model.valueobjects.GeoPoint;
+import java.util.LinkedHashMap;
 import com.allpatekplatform.alerts.domain.model.valueobjects.WeatherSnapshot;
 import com.allpatekplatform.shared.application.result.ApplicationError;
 import com.allpatekplatform.shared.application.result.Result;
@@ -51,13 +53,16 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
         if (places == null || places.isEmpty()) {
             return Result.success(List.of());
         }
-        var readings = new ArrayList<ClimateReading>();
-        for (int offset = 0; offset < places.size(); offset += batchSize) {
-            var result = fetch(places.subList(offset, Math.min(offset + batchSize, places.size())));
+        var unique = new LinkedHashMap<GeoPoint, ParcelCoordinates>();
+        places.forEach(place -> unique.putIfAbsent(place.point(), place));
+        var locations = List.copyOf(unique.values());
+        var weather = new LinkedHashMap<GeoPoint, WeatherSnapshot>();
+        for (int offset = 0; offset < locations.size(); offset += batchSize) {
+            var result = fetch(locations.subList(offset, Math.min(offset + batchSize, locations.size())));
             if (result instanceof Result.Failure<List<ClimateReading>, ApplicationError>) return result;
-            readings.addAll(result.toOptional().orElseThrow());
+            result.toOptional().orElseThrow().forEach(reading -> weather.put(reading.place().point(), reading.weather()));
         }
-        return Result.success(List.copyOf(readings));
+        return Result.success(places.stream().map(place -> ClimateReading.of(place, weather.get(place.point()))).toList());
     }
 
     private Result<List<ClimateReading>, ApplicationError> fetch(List<ParcelCoordinates> places) {
