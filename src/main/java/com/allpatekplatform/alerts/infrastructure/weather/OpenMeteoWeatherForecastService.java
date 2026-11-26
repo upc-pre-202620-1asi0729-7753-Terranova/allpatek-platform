@@ -35,9 +35,13 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
 
     private final RestClient restClient;
     private final String baseUrl;
+    private final int batchSize;
 
     public OpenMeteoWeatherForecastService(@Qualifier("openMeteoRestClient") RestClient restClient,
-            @Value("${weather.open-meteo.base-url}") String baseUrl) {
+            @Value("${weather.open-meteo.base-url}") String baseUrl,
+            @Value("${weather.open-meteo.batch-size:50}") int batchSize) {
+        if (batchSize < 1 || batchSize > 100) throw new IllegalArgumentException("Weather batch size must be between 1 and 100.");
+        this.batchSize = batchSize;
         this.restClient = restClient;
         this.baseUrl = baseUrl;
     }
@@ -47,6 +51,16 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
         if (places == null || places.isEmpty()) {
             return Result.success(List.of());
         }
+        var readings = new ArrayList<ClimateReading>();
+        for (int offset = 0; offset < places.size(); offset += batchSize) {
+            var result = fetch(places.subList(offset, Math.min(offset + batchSize, places.size())));
+            if (result instanceof Result.Failure<List<ClimateReading>, ApplicationError>) return result;
+            readings.addAll(result.toOptional().orElseThrow());
+        }
+        return Result.success(List.copyOf(readings));
+    }
+
+    private Result<List<ClimateReading>, ApplicationError> fetch(List<ParcelCoordinates> places) {
         try {
             URI uri = UriComponentsBuilder.fromUriString(baseUrl)
                     .queryParam("latitude", join(places, ParcelCoordinates::latitude))
