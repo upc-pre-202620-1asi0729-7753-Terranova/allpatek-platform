@@ -30,7 +30,7 @@ final class OpenMeteoResponseParser {
                 number(current, "precipitation"),
                 number(current, "wind_speed_10m"),
                 number(current, "cloud_cover"),
-                (int) number(current, "weather_code"),
+                weatherCode(current),
                 first(daily, "temperature_2m_min"),
                 first(daily, "temperature_2m_max"),
                 first(daily, "precipitation_sum"),
@@ -38,10 +38,20 @@ final class OpenMeteoResponseParser {
     }
 
     private static double number(JsonNode node, String field) {
-        if (node == null || node.isMissingNode() || node.path(field).isMissingNode()) {
-            return 0;
-        }
-        return node.path(field).asDouble(0);
+        return measurement(node == null ? null : node.get(field));
+    }
+
+    private static double measurement(JsonNode value) {
+        if (value == null || !value.isNumber() || !Double.isFinite(value.doubleValue()))
+            throw new IllegalArgumentException("Missing or invalid weather measurement.");
+        return value.doubleValue();
+    }
+
+    private static int weatherCode(JsonNode node) {
+        double code = number(node, "weather_code");
+        if (code != Math.rint(code) || code < 0 || code > 99)
+            throw new IllegalArgumentException("Invalid weather code.");
+        return (int) code;
     }
 
     private static double first(JsonNode node, String field) {
