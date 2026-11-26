@@ -94,9 +94,14 @@ public class WebSecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(configurer -> configurer.configurationSource(_ -> {
             var cors = new CorsConfiguration();
-            cors.setAllowedOrigins(List.of("http://localhost:4200"));
+            cors.setAllowedOrigins(List.of(
+                    "http://localhost:4200",
+                    "https://terranova-allpatek.netlify.app",
+                    "https://allpatek.proyectaconsultora.com"
+            ));
             cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-            cors.setAllowedHeaders(List.of("*"));
+            cors.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Accept-Language", "Origin"));
+            cors.setMaxAge(3600L);
             return cors;
         }));
         http.csrf(csrfConfigurer -> csrfConfigurer.disable())
