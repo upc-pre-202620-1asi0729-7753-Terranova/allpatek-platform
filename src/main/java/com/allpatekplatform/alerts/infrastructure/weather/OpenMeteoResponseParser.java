@@ -13,9 +13,8 @@ final class OpenMeteoResponseParser {
         } else if (payload != null) {
             blocks.add(payload);
         }
-        while (blocks.size() < expected) {
-            blocks.add(null);
-        }
+        if (blocks.size() != expected)
+            throw new IllegalArgumentException("Forecast response count does not match requested locations.");
         return blocks;
     }
 
