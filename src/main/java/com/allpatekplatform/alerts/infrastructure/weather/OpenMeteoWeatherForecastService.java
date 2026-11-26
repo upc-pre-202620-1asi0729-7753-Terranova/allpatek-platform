@@ -12,6 +12,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -64,9 +68,28 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
                 readings.add(OpenMeteoResponseParser.toReading(places.get(index), blocks.get(index)));
             }
             return Result.success(List.copyOf(readings));
-        } catch (Exception exception) {
-            return Result.failure(ApplicationError.unexpected("OPEN_METEO", exception.getMessage()));
+        } catch (RestClientResponseException exception) {
+            int status = exception.getStatusCode().value();
+            return failure(status == 429 || status >= 500 ? "WEATHER_UNAVAILABLE" : "WEATHER_BAD_GATEWAY");
+        } catch (ResourceAccessException exception) {
+            return failure(isTimeout(exception) ? "WEATHER_TIMEOUT" : "WEATHER_UNAVAILABLE");
+        } catch (JsonProcessingException | IllegalArgumentException exception) {
+            return failure("WEATHER_BAD_GATEWAY");
+        } catch (RestClientException exception) {
+            return failure("WEATHER_UNAVAILABLE");
         }
+    }
+
+    private static Result<List<ClimateReading>, ApplicationError> failure(String code) {
+        return Result.failure(new ApplicationError(code, "Weather data is temporarily unavailable."));
+    }
+
+    private static boolean isTimeout(Throwable exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof java.net.SocketTimeoutException || cause instanceof java.net.http.HttpTimeoutException)
+                return true;
+        }
+        return false;
     }
 
     private static String join(List<ParcelCoordinates> places, java.util.function.ToDoubleFunction<ParcelCoordinates> value) {

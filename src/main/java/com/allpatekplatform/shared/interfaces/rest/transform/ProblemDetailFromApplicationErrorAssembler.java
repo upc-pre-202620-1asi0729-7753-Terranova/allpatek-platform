@@ -43,6 +43,9 @@ public final class ProblemDetailFromApplicationErrorAssembler {
 
     public static HttpStatusCode toStatusFromErrorCode(String errorCode) {
         return switch (errorCode) {
+            case "WEATHER_TIMEOUT" -> HttpStatus.GATEWAY_TIMEOUT;
+            case "WEATHER_UNAVAILABLE" -> HttpStatus.SERVICE_UNAVAILABLE;
+            case "WEATHER_BAD_GATEWAY" -> HttpStatus.BAD_GATEWAY;
             case "VALIDATION_ERROR" -> HttpStatus.BAD_REQUEST;
             case String code when code.endsWith("_NOT_FOUND") -> HttpStatus.NOT_FOUND;
             case "BUSINESS_RULE_VIOLATION" -> HttpStatusCode.valueOf(422);
