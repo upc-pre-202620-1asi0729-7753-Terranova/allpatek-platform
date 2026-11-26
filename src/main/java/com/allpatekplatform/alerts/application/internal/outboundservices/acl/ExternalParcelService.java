@@ -22,7 +22,10 @@ public class ExternalParcelService {
 
     public List<ParcelCoordinates> findLocations(Long ownerId) {
         return parcelsContextFacade.findLocations(ownerId).stream()
-                .map(parcel -> ParcelCoordinates.fromLocation(parcel.id(), parcel.name(), parcel.location()))
+                .map(parcel -> {
+                    try { return ParcelCoordinates.fromLocation(parcel.id(), parcel.name(), parcel.location()); }
+                    catch (IllegalArgumentException exception) { return null; }
+                })
                 .filter(Objects::nonNull)
                 .toList();
     }
