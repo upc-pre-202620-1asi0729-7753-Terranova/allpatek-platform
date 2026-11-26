@@ -4,4 +4,5 @@ import com.allpatekplatform.parcels.infrastructure.persistence.jpa.entities.Parc
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ParcelPersistenceRepository extends JpaRepository<ParcelPersistenceEntity, String> {
+    java.util.List<ParcelPersistenceEntity> findByOwnerId(Long ownerId);
 }
