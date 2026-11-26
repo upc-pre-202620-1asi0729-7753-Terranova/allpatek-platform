@@ -42,6 +42,12 @@ public class ParcelRepositoryImpl implements ParcelRepository {
     }
 
     @Override
+    public List<Parcel> findByOwnerId(Long ownerId) {
+        return persistenceRepository.findByOwnerId(ownerId).stream()
+                .map(ParcelPersistenceAssembler::toDomainFromPersistence).toList();
+    }
+
+    @Override
     public void deleteById(String id) {
         persistenceRepository.deleteById(id);
     }

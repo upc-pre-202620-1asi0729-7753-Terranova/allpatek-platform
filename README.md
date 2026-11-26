@@ -167,6 +167,10 @@ Autoriza con **Gustavo**.
 
 #### 3.2 Alertas
 
+Contrato, unidades y errores: [Climate alerts API](docs/alerts-api.md).
+Arquitectura, configuración y pruebas: [Alerts development](docs/alerts-development.md).
+
+
 | Método | Ruta | Quién |
 |---|---|---|
 | GET | `/api/v1/alerts` | autenticado |

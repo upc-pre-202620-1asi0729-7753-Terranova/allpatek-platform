@@ -28,10 +28,7 @@ public class ClimateQueryServiceImpl implements ClimateQueryService {
 
     @Override
     public Result<List<ClimateReading>, ApplicationError> handle(GetClimateAlertsQuery query) {
-        List<ParcelCoordinates> places = externalParcelService.findLocations(query.ownerId());
-        if (places.isEmpty()) {
-            return Result.success(List.of());
-        }
-        return weatherForecastService.forecast(places);
+        return externalParcelService.findLocations(query.ownerId()).flatMap(places ->
+                places.isEmpty() ? Result.success(List.of()) : weatherForecastService.forecast(places));
     }
 }

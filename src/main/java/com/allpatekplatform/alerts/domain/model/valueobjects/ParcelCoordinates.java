@@ -13,10 +13,9 @@ public record ParcelCoordinates(ParcelId parcelId, AlertParcelName name, GeoPoin
     }
 
     public static ParcelCoordinates fromLocation(String parcelId, String parcelName, String location) {
-        if (location == null || !location.contains(",")) {
-            return null;
-        }
-        String[] parts = location.split(",", 2);
+        if (location == null) throw new IllegalArgumentException("Parcel location is required.");
+        String[] parts = location.split(",", -1);
+        if (parts.length != 2) throw new IllegalArgumentException("Expected latitude,longitude.");
         try {
             double latitude = Double.parseDouble(parts[0].trim());
             double longitude = Double.parseDouble(parts[1].trim());
@@ -24,8 +23,8 @@ public record ParcelCoordinates(ParcelId parcelId, AlertParcelName name, GeoPoin
                     new ParcelId(parcelId),
                     new AlertParcelName(parcelName),
                     new GeoPoint(latitude, longitude));
-        } catch (IllegalArgumentException ignored) {
-            return null;
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalArgumentException("Parcel location must contain valid coordinates.", exception);
         }
     }
 }

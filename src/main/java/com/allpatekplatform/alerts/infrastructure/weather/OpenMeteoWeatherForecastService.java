@@ -3,7 +3,6 @@ package com.allpatekplatform.alerts.infrastructure.weather;
 import com.allpatekplatform.alerts.application.internal.outboundservices.WeatherForecastService;
 import com.allpatekplatform.alerts.domain.model.aggregates.ClimateReading;
 import com.allpatekplatform.alerts.domain.model.valueobjects.ParcelCoordinates;
-import com.allpatekplatform.alerts.domain.model.valueobjects.WeatherSnapshot;
 import com.allpatekplatform.shared.application.result.ApplicationError;
 import com.allpatekplatform.shared.application.result.Result;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,6 +10,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -41,13 +44,20 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
         if (places == null || places.isEmpty()) {
             return Result.success(List.of());
         }
+        return fetch(places);
+    }
+
+    private Result<List<ClimateReading>, ApplicationError> fetch(List<ParcelCoordinates> places) {
         try {
             URI uri = UriComponentsBuilder.fromUriString(baseUrl)
                     .queryParam("latitude", join(places, ParcelCoordinates::latitude))
                     .queryParam("longitude", join(places, ParcelCoordinates::longitude))
                     .queryParam("current", CURRENT)
                     .queryParam("daily", DAILY)
-                    .queryParam("forecast_days", "2")
+                    .queryParam("forecast_days", "1")
+                    .queryParam("temperature_unit", "celsius")
+                    .queryParam("wind_speed_unit", "kmh")
+                    .queryParam("precipitation_unit", "mm")
                     .queryParam("timezone", "auto")
                     .build(true)
                     .toUri();
@@ -56,15 +66,26 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
                     .retrieve()
                     .body(String.class);
             JsonNode payload = json == null || json.isBlank() ? null : MAPPER.readTree(json);
-            List<JsonNode> blocks = blocks(payload, places.size());
+            List<JsonNode> blocks = OpenMeteoResponseParser.blocks(payload, places.size());
             List<ClimateReading> readings = new ArrayList<>();
             for (int index = 0; index < places.size(); index++) {
-                readings.add(toReading(places.get(index), blocks.get(index)));
+                readings.add(OpenMeteoResponseParser.toReading(places.get(index), blocks.get(index)));
             }
             return Result.success(List.copyOf(readings));
-        } catch (Exception exception) {
-            return Result.failure(ApplicationError.unexpected("OPEN_METEO", exception.getMessage()));
+        } catch (RestClientResponseException exception) {
+            int status = exception.getStatusCode().value();
+            return failure(status == 429 || status >= 500 ? "WEATHER_UNAVAILABLE" : "WEATHER_BAD_GATEWAY");
+        } catch (ResourceAccessException exception) {
+            return failure("WEATHER_UNAVAILABLE");
+        } catch (JsonProcessingException | IllegalArgumentException exception) {
+            return failure("WEATHER_BAD_GATEWAY");
+        } catch (RestClientException exception) {
+            return failure("WEATHER_UNAVAILABLE");
         }
+    }
+
+    private static Result<List<ClimateReading>, ApplicationError> failure(String code) {
+        return Result.failure(new ApplicationError(code, "Weather data is temporarily unavailable."));
     }
 
     private static String join(List<ParcelCoordinates> places, java.util.function.ToDoubleFunction<ParcelCoordinates> value) {
@@ -73,56 +94,4 @@ public class OpenMeteoWeatherForecastService implements WeatherForecastService {
                 .collect(Collectors.joining(","));
     }
 
-    private static List<JsonNode> blocks(JsonNode payload, int expected) {
-        List<JsonNode> blocks = new ArrayList<>();
-        if (payload != null && payload.isArray()) {
-            payload.forEach(blocks::add);
-        } else if (payload != null) {
-            blocks.add(payload);
-        }
-        while (blocks.size() < expected) {
-            blocks.add(null);
-        }
-        return blocks;
-    }
-
-    private static ClimateReading toReading(ParcelCoordinates place, JsonNode block) {
-        JsonNode current = block == null ? null : block.path("current");
-        JsonNode daily = block == null ? null : block.path("daily");
-        double temperature = number(current, "temperature_2m");
-        return ClimateReading.of(place, new WeatherSnapshot(
-                temperature,
-                firstNonZero(number(current, "apparent_temperature"), temperature),
-                number(current, "relative_humidity_2m"),
-                number(current, "precipitation"),
-                number(current, "wind_speed_10m"),
-                number(current, "cloud_cover"),
-                (int) number(current, "weather_code"),
-                firstNonZero(first(daily, "temperature_2m_min"), temperature),
-                firstNonZero(first(daily, "temperature_2m_max"), temperature),
-                first(daily, "precipitation_sum"),
-                firstNonZero(first(daily, "wind_speed_10m_max"), number(current, "wind_speed_10m"))));
-    }
-
-    private static double number(JsonNode node, String field) {
-        if (node == null || node.isMissingNode() || node.path(field).isMissingNode()) {
-            return 0;
-        }
-        return node.path(field).asDouble(0);
-    }
-
-    private static double first(JsonNode node, String field) {
-        if (node == null || node.isMissingNode()) {
-            return 0;
-        }
-        JsonNode values = node.path(field);
-        if (values.isArray() && !values.isEmpty()) {
-            return values.get(0).asDouble(0);
-        }
-        return 0;
-    }
-
-    private static double firstNonZero(double value, double fallback) {
-        return value == 0 ? fallback : value;
-    }
 }

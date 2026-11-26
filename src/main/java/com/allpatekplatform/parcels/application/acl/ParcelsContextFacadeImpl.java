@@ -21,8 +21,8 @@ public class ParcelsContextFacadeImpl implements ParcelsContextFacade {
 
     @Override
     public List<ParcelLocation> findLocations(Long ownerId) {
-        return parcelRepository.findAll().stream()
-                .filter(parcel -> ownerId == null || ownerId.equals(parcel.getOwnerId().value()))
+        if (ownerId == null || ownerId <= 0) throw new IllegalArgumentException("A positive owner id is required.");
+        return parcelRepository.findByOwnerId(ownerId).stream()
                 .map(parcel -> new ParcelLocation(
                         parcel.getId().value(),
                         parcel.getName().value(),

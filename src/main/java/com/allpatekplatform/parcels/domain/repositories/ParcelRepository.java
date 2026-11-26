@@ -15,5 +15,7 @@ public interface ParcelRepository {
 
     List<Parcel> findAll();
 
+    List<Parcel> findByOwnerId(Long ownerId);
+
     void deleteById(String id);
 }
