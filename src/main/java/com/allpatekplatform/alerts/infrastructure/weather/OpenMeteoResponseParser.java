@@ -55,14 +55,9 @@ final class OpenMeteoResponseParser {
     }
 
     private static double first(JsonNode node, String field) {
-        if (node == null || node.isMissingNode()) {
-            return 0;
-        }
-        JsonNode values = node.path(field);
-        if (values.isArray() && !values.isEmpty()) {
-            return values.get(0).asDouble(0);
-        }
-        return 0;
+        JsonNode values = node == null ? null : node.get(field);
+        if (values == null || !values.isArray() || values.isEmpty())
+            throw new IllegalArgumentException("Missing daily weather series.");
+        return measurement(values.get(0));
     }
-
 }
