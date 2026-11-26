@@ -5,6 +5,7 @@ import com.allpatekplatform.alerts.domain.model.valueobjects.ParcelCoordinates;
 import com.allpatekplatform.alerts.domain.model.valueobjects.WeatherCondition;
 import com.allpatekplatform.alerts.domain.model.valueobjects.WeatherSnapshot;
 
+import com.allpatekplatform.alerts.domain.services.WeatherRiskPolicy;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,13 +21,13 @@ public record ClimateReading(
 
     public List<ClimateAlert> alerts() {
         List<ClimateAlert> found = new ArrayList<>();
-        if (weather.tempMin() <= 3) {
+        if (WeatherRiskPolicy.frost(weather)) {
             found.add(ClimateAlert.frost(place, weather));
         }
-        if (weather.precipitationSum() >= 10 || weather.precipitation() >= 2) {
+        if (WeatherRiskPolicy.rain(weather)) {
             found.add(ClimateAlert.flood(place, weather));
         }
-        if (weather.windSpeed() >= 30 || weather.windMax() >= 40) {
+        if (WeatherRiskPolicy.wind(weather)) {
             found.add(ClimateAlert.wind(place, weather));
         }
         if (found.isEmpty()) {

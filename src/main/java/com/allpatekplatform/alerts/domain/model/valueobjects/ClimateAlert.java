@@ -16,7 +16,7 @@ public record ClimateAlert(
     }
 
     public static ClimateAlert flood(ParcelCoordinates place, WeatherSnapshot weather) {
-        boolean critical = weather.precipitationSum() >= 20;
+        boolean critical = com.allpatekplatform.alerts.domain.services.WeatherRiskPolicy.criticalRain(weather);
         return new ClimateAlert(
                 new AlertMessage(
                         "alerts.floodTitle",
